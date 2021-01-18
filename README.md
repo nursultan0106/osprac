@@ -1,2 +1,2 @@
 # osprac
-OS Practicum
+OS Practicum BSE-194 Saifudinov Nursultan Askatovic
