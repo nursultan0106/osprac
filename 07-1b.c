@@ -7,57 +7,44 @@
 
 int main()
 {
-  int     *array;
-  int     shmid;
-  int     new = 1;
-  char    pathname[] = "07-1a.c";
-  key_t   key;
-
-  if ((key = ftok(pathname,0)) < 0) {
-    printf("Can\'t generate key\n");
-    exit(-1);
-  }
-
-  if ((shmid = shmget(key, 3*sizeof(int), 0666|IPC_CREAT|IPC_EXCL)) < 0) {
-    if (errno != EEXIST) {
-      printf("Can\'t create shared memory\n");
-      exit(-1);
-    } else {
-      if ((shmid = shmget(key, 3*sizeof(int), 0)) < 0) {
-        printf("Can\'t find shared memory\n");
+    int *array;
+    int shmid;
+    char pathname[] = "07-1a.c";
+    key_t key;
+    char *sourceCode;
+    
+    int fileSize = 0;
+    int *file_size_ptr;
+    
+    if ((key = ftok(pathname,0)) < 0) {
+        printf("Can not generate key\n");
         exit(-1);
-      }
-      new = 0;
     }
-  }
+    
+    if ((shmid = shmget(key, sizeof(int) + fileSize * sizeof(char), 0)) < 0) {
+        printf("Can not create shared memory\n");
+        exit(-1);
+    }
 
-  if ((array = (int *)shmat(shmid, NULL, 0)) == (int *)(-1)) {
-    printf("Can't attach shared memory\n");
-    exit(-1);
-  }
+    if ((file_size_ptr = (int *)shmat(shmid, NULL, 0)) == (int *)(-1)) {
+        printf("Can not attach shared memory\n");
+        exit(-1);
+    }
 
-  if (new) {
-    array[0] =  0;
-    array[1] =  1;
-    array[2] =  1;
-  } else {
-    array[1] += 1;
-    array[2] += 1;
-  }
-
-  printf (
-    "Program 1 was spawn %d times,\n"
-    "program 2 - %d times,\n"
-    "total - %d times\n",
-    array[0],
-    array[1],
-    array[2]
-    );
-
-  if (shmdt(array) < 0) {
-    printf("Can't detach shared memory\n");
-    exit(-1);
-  }
-
-  return 0;
+    fileSize = *file_size_ptr;
+    sourceCode = (char*)(file_size_ptr + 1);
+    
+    for (int i = 0; i < fileSize; i++)
+        putchar(sourceCode[i]);
+    
+    if (shmdt(file_size_ptr) < 0) {
+        printf("Can not detach shared memory\n");
+        exit(-1);
+    }
+    
+    if (shmctl(shmid, IPC_RMID, NULL) < 0) {
+        printf("Can not delete shared memory\n");
+        exit(-1);
+    }
+    return 0;
 }
