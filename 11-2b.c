@@ -5,49 +5,56 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define LAST_MESSAGE 255
-
 int main() {
-	int msqid;
+    int msqid;
+    char pathname[] = "11-2a.c";
+    key_t key;
+    int len, maxlen;
 
-	char pathname[] = "11-2a.c";
+    struct mymsgbuf {
+      long mtype;
+      struct {
+        short sinfo;
+      } info;
+    } mybuf;
 
-	key_t key;
+    if ((key = ftok(pathname, 0)) < 0) {
+        printf("Can't generate key\n");
+        exit(-1);
+    }
 
-	int len, maxlen;
+    if ((msqid = msgget(key, 0666 | IPC_CREAT)) < 0) {
+        printf("Can't get msqid\n");
+        exit(-1);
+    }
 
-	struct mymsgbuf {
-		long mtype;
-		struct {
-			short sinfo;
-			float finfo;
-		} info;
-	} mybuf;
+    printf("2nd program started receiving messages from 1st.\n");
+    for (int i = 0; i < 5; ++i) {
+        maxlen = sizeof(mybuf.info);
+        if (len = msgrcv(msqid, (struct msgbuf *) &mybuf, maxlen, 1, 0) < 0) {
+            printf("Can't receive message from queue\n");
+            exit(-1);
+        }
 
-	if ((key = ftok(pathname, 0)) < 0) {
-		printf("Can't generate key\n");
-		exit(-1);
-	}
+        printf("2nd program received message type = %ld, sInfo = %i\n", mybuf.mtype, mybuf.info.sinfo);
+    }
 
-	if ((msqid = msgget(key, 0666 | IPC_CREAT)) < 0) {
-		printf("Can't get msqid\n");
-		exit(-1);
-	}
+    printf("2nd program finished receiving messages from 1st.\n");
+    printf("2nd program started sending messages to first.\n");
 
-	while (1) {
-		maxlen = sizeof(mybuf.info);
-		if (len = msgrcv(msqid, &mybuf, maxlen, 0, 0) < 0) {
-			printf("Can't receive message from queue\n");
-			exit(-1);
-		}
+    for (int i = 0; i < 5; ++i) {
+        mybuf.mtype = 2;
+        mybuf.info.sinfo = 7331;
+        len = sizeof(mybuf.info);
 
-		if (mybuf.mtype == LAST_MESSAGE) {
-			msgctl(msqid, IPC_RMID, NULL);
-			exit(0);
-		}
+        if (msgsnd(msqid, (struct msgbuf *) &mybuf, len, 0) < 0) {
+            printf("Can't send message to queue\n");
+            msgctl(msqid, IPC_RMID, (struct msqid_ds *) NULL);
+            exit(-1);
+        }
+    }
 
-		printf("message type = %ld, sInfo = %i, fInfo = %f\n", mybuf.mtype, mybuf.info.sinfo, mybuf.info.finfo);
-	}
+    printf("2nd program finished sending messages to first.\n");
 
-	return 0;
+    return 0;
 }

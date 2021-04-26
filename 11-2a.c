@@ -5,70 +5,58 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define LAST_MESSAGE 255 // Message type for termination of program 11-1b.c
+int main() {
+    int msqid;
+    char pathname[] = "11-2a.c";
+    key_t key;
+    int len, maxlen;
 
-int main(void)
-{
-  int msqid;      // IPC descriptor for the message queue
-  char pathname[]="11-2a.c"; // The file name used to generate the key.
-                             // A file with this name must exist in the current directory.
-  key_t  key;     // IPC key
-  int i,len;      // Cycle counter and the length of the informative part of the message
+    struct mymsgbuf {
+      long mtype;
+      struct {
+        short sinfo;
+      } info;
+    } mybuf;
 
-  struct mymsgbuf // Custom structure for the message
-  {
-    long mtype;
-    struct {
-      short sinfo;
-      float finfo;
-    } info;
-  } mybuf;
-
-  if ((key = ftok(pathname,0)) < 0) {
-    printf("Can\'t generate key\n");
-    exit(-1);
-  }
-  //
-  // Trying to get access by key to the message queue, if it exists,
-  // or create it, with read & write access for all users.
-  //
-  if ((msqid = msgget(key, 0666 | IPC_CREAT)) < 0) {
-    printf("Can\'t get msqid\n");
-    exit(-1);
-  }
-
-  /* Send information */
-
-  for (i = 1; i <= 5; i++) {
-    //
-    // Fill in the structure for the message and
-    // determine the length of the informative part.
-    //
-    mybuf.mtype = 1;
-    mybuf.info.sinfo = 1337;
-    mybuf.info.finfo = 13.37;
-    len = sizeof(mybuf.info);
-    //
-    // Send the message. If there is an error,
-    // report it and delete the message queue from the system.
-    //
-    if (msgsnd(msqid, (struct msgbuf *) &mybuf, len, 0) < 0) {
-      printf("Can\'t send message to queue\n");
-      msgctl(msqid, IPC_RMID, (struct msqid_ds *) NULL);
-      exit(-1);
+    if ((key = ftok(pathname, 0)) < 0) {
+        printf("Can't generate key\n");
+        exit(-1);
     }
-  }
 
-  /* Send the last message */
+    if ((msqid = msgget(key, 0666 | IPC_CREAT)) < 0) {
+        printf("Can't get msqid\n");
+        exit(-1);
+    }
 
-  mybuf.mtype = LAST_MESSAGE;
-  len = 0;
+    printf("1st program start sending messages to 2nd.\n");
+    for (int i = 0; i < 5; ++i) {
+        mybuf.mtype = 1;
+        mybuf.info.sinfo = 1337;
+        len = sizeof(mybuf.info);
 
-  if (msgsnd(msqid, (struct msgbuf *) &mybuf, len, 0) < 0) {
-    printf("Can\'t send message to queue\n");
+        if (msgsnd(msqid, (struct msgbuf *) &mybuf, len, 0) < 0) {
+            printf("Can't send message to queue\n");
+            msgctl(msqid, IPC_RMID, (struct msqid_ds *) NULL);
+            exit(-1);
+        }
+    }
+
+    printf("1st program finished sending messages to 2nd.\n");
+    printf("1st program started receiving messages from 2nd.\n");
+
+    for (int i = 0; i < 5; ++i) {
+        maxlen = sizeof(mybuf.info);
+        if (len = msgrcv(msqid, (struct msgbuf *) &mybuf, maxlen, 2, 0) < 0) {
+            printf("Can't receive message from queue\n");
+            exit(-1);
+        }
+
+        printf("1st program received message type = %ld, sInfo = %i\n", mybuf.mtype, mybuf.info.sinfo);
+    }
+
     msgctl(msqid, IPC_RMID, (struct msqid_ds *) NULL);
-    exit(-1);
-  }
 
-  return 0;
+    printf("1st program finished receiving messages.\n");
+
+    return 0;
 }
