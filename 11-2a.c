@@ -10,16 +10,17 @@
 int main(void)
 {
   int msqid;      // IPC descriptor for the message queue
-  char pathname[]="11-1a.c"; // The file name used to generate the key.
+  char pathname[]="11-2a.c"; // The file name used to generate the key.
                              // A file with this name must exist in the current directory.
-  key_t key;     // IPC key
+  key_t  key;     // IPC key
   int i,len;      // Cycle counter and the length of the informative part of the message
 
-  struct mymsgbuf { // Custom structure for the message
+  struct mymsgbuf // Custom structure for the message
+  {
     long mtype;
     struct {
-      char cinfo;
-      nt iinfo;
+      short sinfo;
+      float finfo;
     } info;
   } mybuf;
 
@@ -36,19 +37,16 @@ int main(void)
     exit(-1);
   }
 
-  const char  chars[] = {'a', 'b', 'c', 'd', 'e'};
-  const int   nums[] = {1, 2, 3, 4, 5};
-
   /* Send information */
 
-  for (i = 0; i < 5; i++) {
+  for (i = 1; i <= 5; i++) {
     //
     // Fill in the structure for the message and
     // determine the length of the informative part.
     //
-    mybuf.mtype = i + 1;
-    mybuf.info.cinfo = chars[i];
-    mybuf.info.iinfo = nums[i];
+    mybuf.mtype = 1;
+    mybuf.info.sinfo = 1337;
+    mybuf.info.finfo = 13.37;
     len = sizeof(mybuf.info);
     //
     // Send the message. If there is an error,
