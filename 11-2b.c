@@ -10,7 +10,7 @@
 int main() {
 	int msqid;
 
-	char pathname[] = "09-2a.c";
+	char pathname[] = "11-2a.c";
 
 	key_t key;
 
