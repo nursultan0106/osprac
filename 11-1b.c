@@ -11,14 +11,16 @@ int main(void)
 {
   int msqid;
   char pathname[]="11-1a.c";
-  key_t key;
+  key_t  key;
   int len, maxlen;
 
-  struct mymsgbuf {
+  struct mymsgbuf // Custom structure for the message
+  {
     long mtype;
-    struct {
-      har cinfo;
-      int iinfo;
+    struct 
+    {
+      float finfo;
+      short sinfo;
     } info;
   } mybuf;
 
@@ -54,7 +56,7 @@ int main(void)
       exit(0);
     }
 
-    printf("message type = %ld, char = %c, number = %d\n", mybuf.mtype, mybuf.info.cinfo, mybuf.info.iinfo);
+    printf("message type = %ld, finfo = %f, sinfo = %i\n", mybuf.mtype, mybuf.info.finfo, mybuf.info.sinfo);
   }
 
   return 0;

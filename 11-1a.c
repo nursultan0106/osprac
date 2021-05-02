@@ -15,11 +15,13 @@ int main(void)
   key_t key;     // IPC key
   int i,len;      // Cycle counter and the length of the informative part of the message
 
-  struct mymsgbuf { // Custom structure for the message
+  struct mymsgbuf // Custom structure for the message
+  {
     long mtype;
-    struct {
-      char cinfo;
-      nt iinfo;
+    struct 
+    {
+      float finfo;
+      short sinfo;
     } info;
   } mybuf;
 
@@ -36,19 +38,16 @@ int main(void)
     exit(-1);
   }
 
-  const char  chars[] = {'a', 'b', 'c', 'd', 'e'};
-  const int   nums[] = {1, 2, 3, 4, 5};
-
   /* Send information */
 
-  for (i = 0; i < 5; i++) {
+  for (i = 1; i <= 5; i++) {
     //
     // Fill in the structure for the message and
     // determine the length of the informative part.
     //
-    mybuf.mtype = i + 1;
-    mybuf.info.cinfo = chars[i];
-    mybuf.info.iinfo = nums[i];
+    mybuf.mtype = i;
+    mybuf.info.sinfo = 2020;
+    mybuf.info.finfo = 777.111777;
     len = sizeof(mybuf.info);
     //
     // Send the message. If there is an error,
@@ -64,7 +63,7 @@ int main(void)
   /* Send the last message */
 
   mybuf.mtype = LAST_MESSAGE;
-  len = 0;
+  len         = 0;
 
   if (msgsnd(msqid, (struct msgbuf *) &mybuf, len, 0) < 0) {
     printf("Can\'t send message to queue\n");
